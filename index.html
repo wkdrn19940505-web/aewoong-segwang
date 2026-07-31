@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>애웅세광 - AI 고양이 사주</title>
+<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --pastel-pink: #FFD1DC;
+        --pastel-mint: #B2F2BB;
+        --pastel-cream: #FFF9DB;
+        --pastel-lavender: #E5DBFF;
+        --font-main: 'Gaegu', cursive;
+        --font-content: 'Gowun Dodum', sans-serif;
+    }
+    body { font-family: var(--font-main); background-color: var(--pastel-cream); margin: 0; display: flex; justify-content: center; color: #555; padding-bottom: 80px; }
+    #app { width: 100%; max-width: 480px; background: white; min-height: 100vh; padding: 20px; box-sizing: border-box; }
+    .view { display: none; }
+    .placeholder { text-align: center; padding: 40px 20px; }
+    .form-group { margin-bottom: 15px; text-align: left; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; }
+    input, select, textarea { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ddd; font-family: var(--font-main); box-sizing: border-box; }
+    textarea { font-family: var(--font-content); min-height: 100px; resize: vertical; }
+    button { width: 100%; padding: 15px; background: var(--pastel-pink); border: none; border-radius: 15px; font-family: var(--font-main); font-size: 1.1rem; cursor: pointer; margin-top: 10px; }
+    .btn-secondary { background: #eee; }
+    .btn-danger { background: #ffc9c9; }
+    .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .btn-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    #menu-header { text-align: center; margin-bottom: 20px; background: var(--pastel-cream); padding: 15px; border-radius: 20px; }
+    #menu-cat-img { width: 90px; height: 90px; object-fit: contain; }
+    .speech-bubble { position: relative; background: var(--pastel-lavender); border-radius: 20px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-top: 25px; font-family: var(--font-content); line-height: 1.8; color: #444; }
+    .speech-bubble::after { content: ''; position: absolute; top: -15px; left: 50%; transform: translateX(-50%); border-width: 0 15px 15px 15px; border-style: solid; border-color: transparent transparent var(--pastel-lavender) transparent; }
+    .fortune-cat-container { text-align: center; margin: 20px 0 10px 0; }
+    .fortune-cat-img { width: 140px; height: 140px; object-fit: contain; }
+    .status-line { font-size: 0.8rem; color: #888; margin-top: 10px; text-align: center; }
+    .hint-text { font-size: 0.75rem; color: #999; margin: 4px 0; }
+    .tarot-area { display: flex; gap: 10px; justify-content: center; margin: 20px 0; perspective: 1000px; }
+    .card { width: 90px; height: 150px; position: relative; transform-style: preserve-3d; transition: transform 0.6s; cursor: pointer; }
+    .card.flipped { transform: rotateY(180deg); }
+    .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 10px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.75rem; padding: 5px; box-sizing: border-box; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .card-back { background: var(--pastel-pink); color: white; font-weight: bold; border: 2px solid white; }
+    .card-front { background: white; border: 2px solid var(--pastel-pink); transform: rotateY(180deg); }
+    #bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 480px; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-around; padding: 10px 0; z-index: 100; }
+    .nav-item { flex: 1; text-align: center; font-size: 0.8rem; cursor: pointer; padding: 5px; }
+    #more-menu { position: fixed; bottom: 70px; right: 20px; background: white; border: 1px solid #ddd; border-radius: 15px; padding: 10px; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 99; width: 150px; }
+    .menu-item { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; font-family: var(--font-content); text-align: center; }
+    .profile-card { border: 1px solid #eee; padding: 10px; border-radius: 10px; margin-bottom: 10px; text-align: left; }
+    .profile-card .btn-row { display: flex; gap: 6px; margin-top: 6px; }
+    .profile-card .btn-row button { margin-top: 0; padding: 8px; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+    <!-- ===== 홈 메뉴 ===== -->
+    <div id="view-home" class="view">
+        <div id="menu-header">
+            <img id="menu-cat-img" src="" alt="오늘의 고양이">
+            <h3 id="menu-cat-text"></h3>
+        </div>
+
+        <!-- 광고 슬롯 1: 홈 상단 배너 (카카오 애드핏 가입 후 여기 코드 교체) -->
+        <div class="ad-slot" style="text-align:center; margin:15px 0;">
+<ins class="kakao_ad_area" style="display:block; margin:0 auto;"
+                data-ad-unit = "DAN-t3orEo3eMD4CVg13"
+                data-ad-width = "320"
+                data-ad-height = "50"></ins>
+        </div>
+        <button onclick="showPage('choose-cat')" style="background: var(--pastel-mint);">💌 원하는 고양이한테 상담받기</button>
+        <div class="btn-grid">
+            <button onclick="showPage('result')">오늘의 운세</button>
+            <button onclick="showPage('weekly')">주간 운세</button>
+            <button onclick="showPage('monthly')">월간 운세</button>
+            <button onclick="showPage('yearly')">연간 운세</button>
+            <button onclick="showPage('love-money')">연애·금전·재물</button>
+            <button onclick="showPage('dream')">꿈 해몽</button>
+            <button onclick="showPage('face')">AI 관상</button>
+            <button onclick="showPage('tarot')">타로 카드</button>
+            <button onclick="showPage('match')">고양이 궁합</button>
+            <button onclick="showPage('diary')">감정 일기</button>
+        </div>
+        <button class="btn-secondary" onclick="showPage('settings')">프로필 관리</button>
+    </div>
+
+    <!-- ===== 원하는 고양이 고르기 ===== -->
+    <div id="view-choose-cat" class="view">
+        <h2>어떤 고양이한테 물어볼까요?</h2>
+        <div id="cat-picker-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;"></div>
+        <button class="btn-secondary" onclick="showPage('home')">메뉴로 돌아가기</button>
+    </div>
+
+    <!-- ===== 선택한 고양이와 상담 ===== -->
+    <div id="view-consult" class="view">
+        <h2>고양이 상담</h2>
+        <div class="fortune-cat-container"><img id="consult-cat-image" class="fortune-cat-img" src="" alt="고양이"><h3 id="consult-cat-name"></h3></div>
+        <div class="form-group">
+            <textarea id="consult-input" placeholder="무엇이든 편하게 물어보세요 (고민, 궁금한 것, 오늘 하루 등)"></textarea>
+        </div>
+        <button onclick="getConsultAnswer()">상담받기</button>
+        <div id="consult-fortune-box" class="speech-bubble" style="display:none;"></div>
+        <div id="consult-status-indicator" class="status-line"></div>
+        <button class="btn-secondary" onclick="showPage('choose-cat')">다른 고양이 고르기</button>
+        <button class="btn-secondary" onclick="showPage('home')">메뉴로 돌아가기</button>
+    </div>
+
+    <!-- ===== 프로필 추가/수정 폼 ===== -->
+    <div id="view-form" class="view">
+        <h2 id="form-title">✨ 새 프로필 추가</h2>
+        <div class="form-group"><label>별칭</label><input type="text" id="nickname" placeholder="예: 나, 엄마, 친구"></div>
+        <div class="form-group"><label>생년월일</label><input type="date" id="birthDate"></div>
+        <div class="form-group"><label>태어난 시간 (모르면 비워두세요)</label><input type="time" id="birthTime"></div>
+        <div class="form-group"><label>성별</label><select id="gender"><option value="여성">여성</option><option value="남성">남성</option></select></div>
+        <button id="btn-save-profile" onclick="saveProfile()">저장하고 시작하기</button>
+        <button class="btn-secondary" onclick="cancelForm()">취소</button>
+    </div>
+
+    <!-- ===== 프로필 관리 ===== -->
+    <div id="view-settings" class="view">
+        <h2>⚙️ 프로필 관리</h2>
+        <button onclick="showAddForm()">+ 새 프로필 추가</button>
+        <div id="profile-list" style="margin-top:20px;"></div>
+        <button class="btn-secondary" onclick="showPage('home')">메뉴로 돌아가기</button>
+    </div>
+
+    <!-- ===== 오늘의 운세 ===== -->
+    <div id="view-result" class="view">
+        <h2>오늘의 운세</h2>
+        <div class="fortune-cat-container"><img id="result-cat-image" class="fortune-cat-img" src="" alt="고양이"><h3 id="result-cat-name"></h3></div>
+        <div id="fortune-box" class="speech-bubble">고양이가 사주를 보는 중...</div>
+        <div id="status-indicator" class="status-line">준비됨</div>
+
+        <!-- 광고 슬롯 2: 운세 결과 하단 (같은 방식으로 다른 결과 화면에도 복사해서 넣으면 돼요) -->
+        <div class="ad-slot" style="text-align:center; margin:15px 0;">
+<ins class="kakao_ad_area" style="display:block; margin:0 auto;"
+                data-ad-unit = "DAN-iXNt5wxTVvQzsbJ7"
+                data-ad-width = "320"
+                data-ad-height = "100"></ins>
+        </div>
+
+        <button onclick="getFortune(activeProfileIndex, true)">새로고침</button>
+        <button class="btn-secondary" onclick="showPage('home')">메뉴로 돌아가기</button>
+    </div>
+
+    <!-- ===== 주간 운세 ===== -->
+    <div id="view-weekly" class="view">
+        <h2>주간 운세</h2>
+        <div class="fortune-cat-container"><img id="weekly-cat-image" class="fortune-cat-img" src="" alt="고양이"><h3 id="weekly-cat-name"></h3></div>
+        <div id="weekly-fortune-box" class="speech-bubble">고양이가 이번 주 기운을 살펴보는 중...</div>
+        <div id="weekly-status-indicator" class="status-line">준비됨</div>
+        <div class="ad-slot" style="text-align:center; margin:15px 0;">
+<ins class="kakao_ad_area" style="display:block; margin:0 auto;"
+                data-ad-unit = "DAN-iXNt5wxTVvQzsbJ7"
+                data-ad-width = "320"
+                data-ad-height = "100"></ins>
+        </div>
+        <button onclick="getWeeklyFortune(true)">새로고침</button>
+        <button class="btn-secondary" onclick="showPage('home')">메뉴로 돌아가기</button>
+    </div>
+
+    <!-- ===== 월간 운세 ===== -->
+    <div id="view-monthly" class="view">
+        <h2>월간 운세</h2>
+        <div class="fortune-cat-container"><img id="monthly-cat-image" class="fortune-cat-img" src="" alt="고양이"><h3 id="monthly-cat-name"></h3></div>
+        <div id="monthly-fortune-box" class="speech-bubble">고양이가 이번 달 기운을 살펴보는 중...</div>
+        <div id="monthly-status-indicator" class="status-line">준비됨</div>
+        <div class="ad-slot" style="text-align:center; margin:15px 0;">
+<ins class="kakao_ad_area" style="display:block; margin:0 auto;"
+                data-ad-unit = "DAN-iXNt5wxTVvQzsbJ7"
+                data-ad-width = "320"
+                data-ad-height = "100"></ins>
+        </div>
+        <button onclick="getMonthlyFortune(true)">새로고침</button>
+        <button class="btn-secondary" onclick="showPage('home')">메뉴로 돌아가기</button>
+    </div>
+
+    <!-- ===== 연간 운세 ===== -->
+    <div id="view-yearly" class="view">
+        <h2>연간 운세</h2>
+        <div class="fortune-cat-container"><img id="yearly-cat-image" class="fortune-cat-img" src="" alt="고양이"><h3 id="yearly-cat-name"></h3></div>
+        <div id="yearly-fortune-box" class="speech-bubble">고양이가 올 한 해 기운을 살펴보는 중...</div>
+        <div id="yearly-status-indicator" class="status-line">준비됨</div>
+        <div class="ad-slot" style="text-align:center; margin:15px 0;">
+<ins class="kakao_ad_area" style="display:block; margin:0 auto;"
+                data-ad-unit = "DAN-iXNt5wxTVvQzsbJ7"
+                data-ad-width = "320"
+                data-ad-height = "100"></ins>
+        </div>
+        <button onclick="getYearlyFortune(true)">새로고침</button>
+        <button class="btn-secondary" onclick="showPage('home')">메뉴로 돌아가기</button>
+    </div>
+
+    <!-- ===== 연애·금전·재물 ===== -->
+    <div id="view-love-money" class="view">
+        <h2>연애·금전·재물운</h2>
+        <div class="btn-grid-3">
+            <button onclick="getLoveMoneyFortune('연애운')">연애운</button>
+            <button onclick="getLoveMoneyFortune('금전운')">금전운</button>
+            <button onclick="getLoveMoneyFortune('재물운')">재물운</button>
+        </div>
+        <div style="text-align:center;">
+            <p class="hint-text">금전운: 단기적으로 들고 나는 돈의 흐름</p>
+            <p class="hint-text">재물운: 저축·투자처럼 장기적으로 쌓이는 자산의 흐름</p>
+        </div>
+        <div id="love-money-fortune-box" class="speech-bubble" style="display:none;"></div>
+        <div id="love-money-status-indicator" class="status-line"></div>
+        <div class="ad-slot" style="text-align:center; margin:15px 0;">
+<ins class="kakao_ad_area" style="display:block; margin:0 auto;"
+                data-ad-unit = "DAN-iXNt5wxTVvQzsbJ7"
+                data-ad-width = "320"
+                data-ad-height = "100"></ins>
+        </div>
+        <button id="btn-refresh-love-money" style="display:none;" onclick="refreshLoveMoney()">새로고침</button>
+        <button class="btn-secondary" onclick="showPage('home')">메뉴로 돌아가기</button>
+    </div>
+
+    <!-- ===== 꿈 해몽 ===== -->
+    <div id="view-dream" class="view">
+        <h2>꿈 해몽</h2>
+        <div class="fortune-cat-container"><img id="dream-cat-image" class="fortune-cat-img" src="" alt="고양이"><h3 id="dream-cat-name"></h3></div>
+        <div class="form-group">
+            <textarea id="dream-input" placeholder="어떤 꿈을 꾸셨나요? 최대한 자세히 적어주시면 더 정확하게 풀이해드려요"></textarea>
+        </div>
+        <button onclick="getDreamInterpretation()">해몽 보기</button>
+        <div id="dream-fortune-box" class="speech-bubble" style="display:none;"></div>
+        <div id="dream-status-indicator" class="status-line"></div>
+        <div class="ad-slot" style="text-align:center; margin:15px 0;">
+<ins class="kakao_ad_area" style="display:block; margin:0 auto;"
+                data-ad-unit = "DAN-iXNt5wxTVvQzsbJ7"
+                data-ad-width = "320"
+                data-ad-height = "100"></ins>
+        </div>
+        <button class="btn-secondary" onclick="showPage('home')">메뉴로 돌아가기</button>
+    </div>
+
+    <!-- ===== 타로 카드 (메이저 아르카나 22장) ===== -->
+    <div id="view-tarot" class="view">
+        <h2>타로 카드</h2>
+        <div class="fortune-cat-container"><img id="tarot-cat-image" class="fortune-cat-img" src="" alt="고양이" style="width:80px;height:80px;"><h3 id="tarot-cat-name"></h3></div>
+        <div class="form-group">
+            <label>궁금한 주제</label>
+            <select id="tarot-topic">
+                <option value="오늘의 연애운">오늘의 연애운</option>
+                <option value="오늘의 재물운">오늘의 재물운</option>
+                <option value="오늘의 선택 고민">오늘의 선택 고민</option>
+                <option value="전반적인 흐름">전반적인 흐름</option>
+            </select>
+        </div>
+        <button id="btn-draw-tarot" onclick="drawTarotCards()">카드 뽑기</button>
+        <div id="tarot-area" class="tarot-area"></div>
+        <div id="tarot-result-box" class="speech-bubble" style="display:none;"></div>
+        <div id="tarot-status-indicator" class="status-line"></div>
+        <div class="ad-slot" style="text-align:center; margin:15px 0;">
+<ins class="kakao_ad_area" style="display:block; margin:0 auto;"
+                data-ad-unit = "DAN-iXNt5wxTVvQzsbJ7"
+                data-ad-width = "320"
+                data-ad-height = "100"></ins>
+        </div>
+        <button id="btn-redraw-tarot" class="btn-secondary" style="display:none;" onclick="resetTarot()">다시 뽑기</button>
+        <button class="btn-secondary" onclick="showPage('home')">메뉴로 돌아가기</button>
+    </div>
+
+    <!-- ===== AI 관상 ===== -->
+    <div id="view-face" class="view">
+        <h2>AI 관상</h2>
+        <div class="fortune-cat-container"><img id="face-cat-image" class="fortune-cat-img" src="" alt="고양이"><h3 id="face-cat-name"></h3></div>
+        <div class="form-group">
+            <label>사진 업로드</label>
+            <input type="file" id="face-photo" accept="image/*" onchange="onFacePhotoChange()">
+        </div>
+        <p class="hint-text" style="text-align:center;">사진 또는 아래 텍스트 설명 중 하나만 선택해주세요</p>
+        <div class="form-group">
+            <label>또는 얼굴 특징 설명</label>
+            <textarea id="face-description" placeholder="예: 눈이 크고 둥근 편, 코가 오똑함, 입꼬리가 살짝 올라감 등 얼굴 특징을 설명해주세요"></textarea>
+        </div>
+        <button onclick="getFaceReading()">관상 보기</button>
+        <div id="face-fortune-box" class="speech-bubble" style="display:none;"></div>
+        <div id="face-status-indicator" class="status-line"></div>
+        <div class="ad-slot" style="text-align:center; margin:15px 0;">
+<ins class="kakao_ad_area" style="display:block; margin:0 auto;"
+                data-ad-unit = "DAN-iXNt5wxTVvQzsbJ7"
+                data-ad-width = "320"
+                data-ad-height = "100"></ins>
+        </div>
+        <button class="btn-secondary" onclick="showPage('home')">메뉴로 돌아가기</button>
+    </div>
+
+    <!-- ===== 고양이 궁합 테스트 ===== -->
+    <div id="view-match" class="view">
+        <h2>고양이 궁합 테스트</h2>
+
+        <div id="match-quiz-area">
+            <div id="match-progress" class="status-line" style="text-align:center;"></div>
+            <h3 id="match-question" style="text-align:center; min-height:60px;"></h3>
+            <div id="match-options"></div>
+        </div>
+
+        <div id="match-result-area" style="display:none;">
+            <div class="fortune-cat-container"><img id="match-cat-image" class="fortune-cat-img" src="" alt="고양이"><h3 id="match-cat-name"></h3></div>
+            <div id="match-result-box" class="speech-bubble">고양이가 결과를 살펴보는 중...</div>
+            <div id="match-status-indicator" class="status-line"></div>
+            <div class="ad-slot" style="text-align:center; margin:15px 0;">
+<ins class="kakao_ad_area" style="display:block; margin:0 auto;"
+                    data-ad-unit = "DAN-iXNt5wxTVvQzsbJ7"
+                    data-ad-width = "320"
+                    data-ad-height = "100"></ins>
+        </div>
+            <button onclick="startMatchTest()">다시 테스트하기</button>
+        </div>
+
+        <button class="btn-secondary" onclick="showPage('home')">메뉴로 돌아가기</button>
+    </div>
+
+    <!-- ===== 감정 일기 ===== -->
+    <div id="view-diary" class="view">
+        <h2>감정 일기</h2>
+        <div class="fortune-cat-container"><img id="diary-cat-image" class="fortune-cat-img" src="" alt="고양이"><h3 id="diary-cat-name"></h3></div>
+        <div class="form-group">
+            <label>오늘 기분이 어때요?</label>
+            <textarea id="diary-input" placeholder="오늘 있었던 일이나 지금 기분을 자유롭게 적어주세요"></textarea>
+        </div>
+        <button onclick="getDiaryComfort()">고양이한테 털어놓기</button>
+        <div id="diary-fortune-box" class="speech-bubble" style="display:none;"></div>
+        <div id="diary-status-indicator" class="status-line"></div>
+        <div class="ad-slot" style="text-align:center; margin:15px 0;">
+<ins class="kakao_ad_area" style="display:block; margin:0 auto;"
+                data-ad-unit = "DAN-iXNt5wxTVvQzsbJ7"
+                data-ad-width = "320"
+                data-ad-height = "100"></ins>
+        </div>
+        <button class="btn-secondary" onclick="showPage('home')">메뉴로 돌아가기</button>
+    </div>
+
+</div>
+
+<!-- ===== 하단 네비게이션 ===== -->
+<div id="bottom-nav">
+    <div class="nav-item" onclick="showPage('result')">📅<br>오늘의 운세</div>
+    <div class="nav-item" onclick="showPage('love-money')">💖<br>연애·재물</div>
+    <div class="nav-item" onclick="showPage('tarot')">🃏<br>타로</div>
+    <div class="nav-item" onclick="showPage('diary')">📝<br>일기</div>
+    <div class="nav-item" onclick="toggleMoreMenu()">≡<br>더보기</div>
+</div>
+<div id="more-menu">
+    <div class="menu-item" onclick="showPage('weekly'); toggleMoreMenu();">주간 운세</div>
+    <div class="menu-item" onclick="showPage('monthly'); toggleMoreMenu();">월간 운세</div>
+    <div class="menu-item" onclick="showPage('yearly'); toggleMoreMenu();">연간 운세</div>
+    <div class="menu-item" onclick="showPage('dream'); toggleMoreMenu();">꿈 해몽</div>
+    <div class="menu-item" onclick="showPage('face'); toggleMoreMenu();">AI 관상</div>
+    <div class="menu-item" onclick="showPage('match'); toggleMoreMenu();">고양이 궁합</div>
+</div>
+
+<script>
+    // ---------------------------------------------------------
+    // API 키 및 URL 설정 (본인 키로 교체해서 사용하세요)
+    // ---------------------------------------------------------
+    // 이제 Gemini API를 브라우저가 직접 호출하지 않고, 내 서버(/api/fortune)를 거쳐요.
+    // API 키는 서버(Vercel 환경변수)에만 있고 브라우저 코드에는 존재하지 않아요.
+    const MY_SERVER_API = "/api/fortune";
+
+    const catData = [
+        { name: "다솜", persona: "차분하고 다정한 어른 말투, 따뜻한 위로" },
+        { name: "새초", persona: "츤데레, 피곤해하지만 정확한 반말투" },
+        { name: "야물", persona: "계획적이고 똑부러지는 존댓말, 체크리스트 스타일" },
+        { name: "몽지", persona: "몽환적이고 철학적인 말투, 말줄임표 사용" },
+        { name: "두리", persona: "소심하고 조심스러운 존댓말" },
+        { name: "퐁퐁", persona: "텐션 높고 신나는 활기찬 반말투, 느낌표 사용" },
+        { name: "느루", persona: "나른하고 여유로운 반말, '~잖아요~' 톤" }
+    ];
+
+    // 타로 카드: 메이저 아르카나 22장 (응답 길이 문제로 마이너 아르카나는 제외)
+    const tarotDeck = [
+        "The Fool", "The Magician", "The High Priestess", "The Empress", "The Emperor",
+        "The Hierophant", "The Lovers", "The Chariot", "Strength", "The Hermit",
+        "Wheel of Fortune", "Justice", "The Hanged Man", "Death", "Temperance",
+        "The Devil", "The Tower", "The Star", "The Moon", "The Sun", "Judgement", "The World"
+    ];
+
+    let userProfiles = JSON.parse(localStorage.getItem('userProfiles') || '[]');
+    let activeProfileIndex = parseInt(localStorage.getItem('activeProfileIndex') || '0');
+    let editingIndex = null; // 프로필 수정 중인 인덱스 (null이면 새로 추가 모드)
+
+    let weeklyCache = null, monthlyCache = null, yearlyCache = null;
+    let loveMoneyCache = { "연애운": null, "금전운": null, "재물운": null };
+    let currentLoveMoneyTopic = "";
+    let currentCards = [];
+    let flippedCount = 0;
+
+    // ---------------------------------------------------------
+    // 초기화
+    // ---------------------------------------------------------
+    window.onload = () => {
+        if (activeProfileIndex >= userProfiles.length || activeProfileIndex < 0) {
+            activeProfileIndex = 0;
+            localStorage.setItem('activeProfileIndex', 0);
+        }
+        if (userProfiles.length > 0) {
+            showPage('home');
+        } else {
+            showPage('form');
+        }
+    };
+
+    function todayCat() {
+        const day = new Date().getDay();
+        return { day, cat: catData[day] };
+    }
+
+    // ---------------------------------------------------------
+    // 화면 전환
+    // ---------------------------------------------------------
+    function showPage(pageId) {
+        document.querySelectorAll('.view').forEach(el => el.style.display = 'none');
+        document.getElementById(`view-${pageId}`).style.display = 'block';
+        document.getElementById('more-menu').style.display = 'none';
+
+        if (pageId === 'home') renderMenuHeader();
+        if (pageId === 'settings') renderProfileList();
+        if (pageId === 'result' && userProfiles.length > 0) {
+            setCatHeader('result', 'cat');
+            getFortune(activeProfileIndex);
+        }
+        if (pageId === 'weekly' && userProfiles.length > 0) {
+            setCatHeader('weekly', 'cat');
+            getWeeklyFortune();
+        }
+        if (pageId === 'monthly' && userProfiles.length > 0) {
+            setCatHeader('monthly', 'cat');
+            getMonthlyFortune();
+        }
+        if (pageId === 'yearly' && userProfiles.length > 0) {
+            setCatHeader('yearly', 'cat');
+            getYearlyFortune();
+        }
+        if (pageId === 'dream') setCatHeader('dream', 'cat');
+        if (pageId === 'tarot') setCatHeader('tarot', 'cat');
+        if (pageId === 'face') setCatHeader('face', 'cat');
+        if (pageId === 'diary') setCatHeader('diary', 'cat');
+        if (pageId === 'match') startMatchTest();
+        if (pageId === 'choose-cat') renderCatPicker();
+    }
+
+    function setCatHeader(prefix) {
+        const { day, cat } = todayCat();
+        const img = document.getElementById(`${prefix}-cat-image`);
+        const name = document.getElementById(`${prefix}-cat-name`);
+        if (img) img.src = `images/cat-${day}.jfif`;
+        if (name) name.innerText = cat.name;
+    }
+
+    function toggleMoreMenu() {
+        const menu = document.getElementById('more-menu');
+        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function renderMenuHeader() {
+        const { day, cat } = todayCat();
+        document.getElementById('menu-cat-img').src = `images/cat-${day}.jfif`;
+        document.getElementById('menu-cat-text').innerText = `오늘은 ${cat.name}이가 봐드려요`;
+    }
+
+    // ---------------------------------------------------------
+    // 프로필 관리 (추가 / 수정 / 삭제 / 선택)
+    // ---------------------------------------------------------
+    function showAddForm() {
+        editingIndex = null;
+        document.getElementById('form-title').innerText = '✨ 새 프로필 추가';
+        document.getElementById('nickname').value = '';
+        document.getElementById('birthDate').value = '';
+        document.getElementById('birthTime').value = '';
+        document.getElementById('gender').value = '여성';
+        showPage('form');
+    }
+
+    function showEditForm(idx) {
+        editingIndex = idx;
+        const p = userProfiles[idx];
+        document.getElementById('form-title').innerText = '✏️ 프로필 수정';
+        document.getElementById('nickname').value = p.nickname;
+        document.getElementById('birthDate').value = p.birthDate;
+        document.getElementById('birthTime').value = p.birthTime || '';
+        document.getElementById('gender').value = p.gender;
+        showPage('form');
+    }
+
+    function cancelForm() {
+        if (userProfiles.length > 0) showPage('settings');
+        else showPage('form'); // 프로필이 하나도 없으면 취소 불가, 폼 유지
+    }
+
+    function saveProfile() {
+        const data = {
+            nickname: document.getElementById('nickname').value || "내 프로필",
+            birthDate: document.getElementById('birthDate').value,
+            birthTime: document.getElementById('birthTime').value,
+            gender: document.getElementById('gender').value
+        };
+        if (!data.birthDate) { alert("생년월일을 입력해주세요!"); return; }
+
+        if (editingIndex !== null) {
+            userProfiles[editingIndex] = data;
+        } else {
+            userProfiles.push(data);
+            activeProfileIndex = userProfiles.length - 1;
+            localStorage.setItem('activeProfileIndex', activeProfileIndex);
+        }
+        localStorage.setItem('userProfiles', JSON.stringify(userProfiles));
+        editingIndex = null;
+        showPage('home');
+    }
+
+    function renderProfileList() {
+        const listDiv = document.getElementById('profile-list');
+        listDiv.innerHTML = '';
+        if (userProfiles.length === 0) {
+            listDiv.innerHTML = '<p style="text-align:center;color:#999;">저장된 프로필이 없어요.</p>';
+            return;
+        }
+        userProfiles.forEach((p, idx) => {
+            const isActive = idx === activeProfileIndex;
+            listDiv.innerHTML += `
+                <div class="profile-card" style="${isActive ? 'border-color:var(--pastel-pink); border-width:2px;' : ''}">
+                    <strong>${p.nickname}</strong> ${isActive ? '⭐' : ''}<br>
+                    <span style="font-size:0.85rem;color:#888;">${p.birthDate}</span>
+                    <div class="btn-row">
+                        <button onclick="switchProfile(${idx})">선택</button>
+                        <button class="btn-secondary" onclick="showEditForm(${idx})">수정</button>
+                        <button class="btn-danger" onclick="deleteProfile(${idx})">삭제</button>
+                    </div>
+                </div>`;
+        });
+    }
+
+    function switchProfile(idx) {
+        activeProfileIndex = idx;
+        localStorage.setItem('activeProfileIndex', idx);
+        weeklyCache = null; monthlyCache = null; yearlyCache = null;
+        loveMoneyCache = { "연애운": null, "금전운": null, "재물운": null };
+        renderProfileList();
+        alert("프로필이 변경되었습니다.");
+    }
+
+    function deleteProfile(idx) {
+        if (!confirm("정말 삭제하시겠습니까?")) return;
+        userProfiles.splice(idx, 1);
+        localStorage.setItem('userProfiles', JSON.stringify(userProfiles));
+        if (activeProfileIndex >= userProfiles.length) activeProfileIndex = 0;
+        localStorage.setItem('activeProfileIndex', activeProfileIndex);
+        renderProfileList();
+    }
+
+    // ---------------------------------------------------------
+    // 마크다운 -> HTML 변환
+    // ---------------------------------------------------------
+    function markdownToHTML(text) {
+        return text
+            .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/^---$/gim, '<hr>')
+            .replace(/^\* (.*$)/gim, '<li>$1</li>')
+            .replace(/(<li>.*<\/li>)/gim, '<ul>$1</ul>')
+            .replace(/\n/g, '<br>');
+    }
+
+    // ---------------------------------------------------------
+    // 공통 API 호출 함수 - 이제 구글이 아니라 내 서버(/api/fortune)를 호출해요.
+    // 재시도(503/429)와 candidates 체크는 서버 쪽에서 이미 처리하고 옵니다.
+    // ---------------------------------------------------------
+    async function callCatFortuneAPI(promptText, boxId, statusId) {
+        const box = document.getElementById(boxId);
+        const status = document.getElementById(statusId);
+
+        if (box.style.display === 'none') box.style.display = 'block';
+        if (status) status.innerText = "API 요청 중...";
+
+        try {
+            const fetchPromise = fetch(MY_SERVER_API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ promptText })
+            });
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('TIMEOUT')), 35000)
+            );
+            const response = await Promise.race([fetchPromise, timeoutPromise]);
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || `HTTP ${response.status}`);
+            }
+
+            box.innerHTML = markdownToHTML(data.result);
+            if (status) status.innerText = "완료!";
+            return data.result;
+        } catch (error) {
+            console.error("callCatFortuneAPI 에러:", error);
+            const msg = error.message === 'TIMEOUT'
+                ? "응답 시간이 너무 깁니다. 네트워크를 확인해주세요."
+                : `고양이가 잠시 졸고 있어요 (에러: ${error.message})`;
+            box.innerHTML = msg;
+            if (status) status.innerText = "에러 발생";
+            return null;
+        }
+    }
+
+    // ---------------------------------------------------------
+    // 오늘의 운세
+    // ---------------------------------------------------------
+    async function getFortune(index, forceRefresh = false) {
+        if (index === undefined || index === null || !userProfiles[index]) {
+            showPage('settings');
+            return;
+        }
+        const userData = userProfiles[index];
+        const { cat } = todayCat();
+        const promptText = `너는 '${cat.name}' 사주 전문가 고양이야. 성격은 '${cat.persona}'. 답변은 꼭 마크다운 형식을 사용해줘.
+        사용자 정보: ${userData.nickname}, 생일: ${userData.birthDate}, 시간: ${userData.birthTime || '모름'}, 성별: ${userData.gender}.
+        오늘의 종합 운세를 3~5문장으로 풀이해줘.`;
+        await callCatFortuneAPI(promptText, 'fortune-box', 'status-indicator');
+    }
+
+    // ---------------------------------------------------------
+    // 주간 / 월간 / 연간 운세
+    // ---------------------------------------------------------
+    async function getWeeklyFortune(forceRefresh = false) {
+        if (weeklyCache && !forceRefresh) {
+            document.getElementById('weekly-fortune-box').innerHTML = weeklyCache;
+            return;
+        }
+        const userData = userProfiles[activeProfileIndex];
+        const { cat } = todayCat();
+        const promptText = `너는 '${cat.name}' 사주 전문가 고양이야. 성격은 '${cat.persona}'.
+        사용자 정보: ${userData.nickname}, 생일: ${userData.birthDate}, 시간: ${userData.birthTime || '모름'}.
+        오늘부터 이번 주 일요일까지의 주간 운세를 풀이해줘. 월~일 요일별로 간단히 한 줄씩 짚어주고,
+        이번 주 전체적으로 주의할 점과 좋은 점을 정리해줘.`;
+        const result = await callCatFortuneAPI(promptText, 'weekly-fortune-box', 'weekly-status-indicator');
+        if (result) weeklyCache = document.getElementById('weekly-fortune-box').innerHTML;
+    }
+
+    async function getMonthlyFortune(forceRefresh = false) {
+        if (monthlyCache && !forceRefresh) {
+            document.getElementById('monthly-fortune-box').innerHTML = monthlyCache;
+            return;
+        }
+        const userData = userProfiles[activeProfileIndex];
+        const { cat } = todayCat();
+        const promptText = `너는 '${cat.name}' 사주 전문가 고양이야. 성격은 '${cat.persona}'.
+        사용자 정보: ${userData.nickname}, 생일: ${userData.birthDate}, 시간: ${userData.birthTime || '모름'}.
+        이번 달 전체 운세를 풀이해줘. 초순/중순/하순으로 나눠서 각각 어떤 흐름인지 짚어주고,
+        이번 달 전체적으로 조심할 점과 기회를 정리해줘.`;
+        const result = await callCatFortuneAPI(promptText, 'monthly-fortune-box', 'monthly-status-indicator');
+        if (result) monthlyCache = document.getElementById('monthly-fortune-box').innerHTML;
+    }
+
+    async function getYearlyFortune(forceRefresh = false) {
+        if (yearlyCache && !forceRefresh) {
+            document.getElementById('yearly-fortune-box').innerHTML = yearlyCache;
+            return;
+        }
+        const userData = userProfiles[activeProfileIndex];
+        const { cat } = todayCat();
+        const promptText = `너는 '${cat.name}' 사주 전문가 고양이야. 성격은 '${cat.persona}'.
+        사용자 정보: ${userData.nickname}, 생일: ${userData.birthDate}, 시간: ${userData.birthTime || '모름'}.
+        올해 전체 운세를 풀이해줘. 상반기/하반기로 나눠서 각각 어떤 흐름인지 짚어주고,
+        올해 전체적으로 조심할 점과 큰 기회가 있을 시기를 정리해줘.`;
+        const result = await callCatFortuneAPI(promptText, 'yearly-fortune-box', 'yearly-status-indicator');
+        if (result) yearlyCache = document.getElementById('yearly-fortune-box').innerHTML;
+    }
+
+    // ---------------------------------------------------------
+    // 연애·금전·재물운
+    // ---------------------------------------------------------
+    async function getLoveMoneyFortune(topic, forceRefresh = false) {
+        currentLoveMoneyTopic = topic;
+        const box = document.getElementById('love-money-fortune-box');
+        box.style.display = 'block';
+        document.getElementById('btn-refresh-love-money').style.display = 'block';
+
+        if (loveMoneyCache[topic] && !forceRefresh) {
+            box.innerHTML = loveMoneyCache[topic];
+            return;
+        }
+        const userData = userProfiles[activeProfileIndex];
+        const { cat } = todayCat();
+        const promptText = `너는 '${cat.name}' 사주 전문가 고양이야. 성격은 '${cat.persona}'.
+        사용자 정보: ${userData.nickname}, 생일: ${userData.birthDate}, 시간: ${userData.birthTime || '모름'}.
+        이 사람의 ${topic}을 오늘 기준으로 3~5문장으로 풀이해줘.`;
+        const result = await callCatFortuneAPI(promptText, 'love-money-fortune-box', 'love-money-status-indicator');
+        if (result) loveMoneyCache[topic] = box.innerHTML;
+    }
+
+    function refreshLoveMoney() {
+        if (currentLoveMoneyTopic) getLoveMoneyFortune(currentLoveMoneyTopic, true);
+    }
+
+    // ---------------------------------------------------------
+    // 꿈 해몽
+    // ---------------------------------------------------------
+    async function getDreamInterpretation() {
+        const dreamText = document.getElementById('dream-input').value.trim();
+        if (!dreamText) { alert("꿈 내용을 입력해주세요!"); return; }
+
+        const userData = userProfiles[activeProfileIndex];
+        const { cat } = todayCat();
+        const promptText = `너는 '${cat.name}' 사주 전문가 고양이야. 성격은 '${cat.persona}'.
+        아래 꿈 내용을 전통적인 해몽 관점과 현대적 심리 해석을 함께 곁들여서 재미있게 풀이해줘.
+        꿈 내용: ${dreamText}`;
+
+        document.getElementById('dream-fortune-box').style.display = 'block';
+        await callCatFortuneAPI(promptText, 'dream-fortune-box', 'dream-status-indicator');
+    }
+
+    // ---------------------------------------------------------
+    // 타로 카드
+    // ---------------------------------------------------------
+    function drawTarotCards() {
+        const area = document.getElementById('tarot-area');
+        area.innerHTML = '';
+        currentCards = [];
+        flippedCount = 0;
+        document.getElementById('btn-draw-tarot').style.display = 'none';
+        document.getElementById('tarot-result-box').style.display = 'none';
+        document.getElementById('btn-redraw-tarot').style.display = 'none';
+        document.getElementById('tarot-status-indicator').innerText = '';
+
+        const shuffled = [...tarotDeck].sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, 3);
+
+        selected.forEach((cardName) => {
+            const isReversed = Math.random() > 0.5;
+            const fullName = `${cardName}${isReversed ? ' (역방향)' : ' (정방향)'}`;
+            currentCards.push(fullName);
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `<div class="card-face card-back">?</div><div class="card-face card-front">${fullName}</div>`;
+            card.onclick = () => flipCard(card);
+            area.appendChild(card);
+        });
+        document.getElementById('tarot-status-indicator').innerText = "카드를 클릭해 뒤집어주세요!";
+    }
+
+    function flipCard(card) {
+        if (!card.classList.contains('flipped')) {
+            card.classList.add('flipped');
+            flippedCount++;
+            if (flippedCount === 3) getTarotReading();
+        }
+    }
+
+    async function getTarotReading() {
+        const topic = document.getElementById('tarot-topic').value;
+        const { cat } = todayCat();
+        const promptText = `너는 '${cat.name}' 사주 전문가 고양이야. 성격은 '${cat.persona}'.
+        사용자가 궁금해하는 주제는 '${topic}'이야. 아래 3장의 타로 카드를 과거/현재/미래 순서로 뽑았어.
+        각 카드의 의미를 짚어주고, 전체적인 조언을 재미있게 풀이해줘.
+        1번(과거): ${currentCards[0]}
+        2번(현재): ${currentCards[1]}
+        3번(미래): ${currentCards[2]}`;
+
+        document.getElementById('tarot-result-box').style.display = 'block';
+        await callCatFortuneAPI(promptText, 'tarot-result-box', 'tarot-status-indicator');
+        document.getElementById('btn-redraw-tarot').style.display = 'block';
+    }
+
+    function resetTarot() {
+        document.getElementById('tarot-area').innerHTML = '';
+        document.getElementById('tarot-result-box').style.display = 'none';
+        document.getElementById('btn-redraw-tarot').style.display = 'none';
+        document.getElementById('btn-draw-tarot').style.display = 'block';
+        document.getElementById('tarot-status-indicator').innerText = '';
+    }
+
+    // ---------------------------------------------------------
+    // AI 관상
+    // ---------------------------------------------------------
+    function onFacePhotoChange() {
+        const hasPhoto = document.getElementById('face-photo').files.length > 0;
+        document.getElementById('face-description').disabled = hasPhoto;
+        if (hasPhoto) document.getElementById('face-description').value = '';
+    }
+
+    function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    async function getFaceReading() {
+        const photoInput = document.getElementById('face-photo');
+        const desc = document.getElementById('face-description').value.trim();
+        const hasPhoto = photoInput.files.length > 0;
+
+        if (!hasPhoto && !desc) {
+            alert("사진을 올리거나 얼굴 특징을 설명해주세요!");
+            return;
+        }
+
+        const { cat } = todayCat();
+        const box = document.getElementById('face-fortune-box');
+        const status = document.getElementById('face-status-indicator');
+        box.style.display = 'block';
+
+        let promptText = `너는 '${cat.name}' 사주 전문가 고양이야. 성격은 '${cat.persona}'.
+        아래 얼굴을 관상학적 관점에서 재미있고 긍정적으로 해석해줘. 얼굴형, 눈, 코, 입 순서로 짚어주고,
+        전체적인 운세 느낌도 한 문단 덧붙여줘.`;
+
+        if (hasPhoto) {
+            box.innerHTML = "고양이가 관상을 살펴보는 중...";
+            status.innerText = "API 요청 중...";
+            try {
+                const base64 = await fileToBase64(photoInput.files[0]);
+                await getFaceReadingWithImage(promptText, base64, photoInput.files[0].type || "image/jpeg", 'face-fortune-box', 'face-status-indicator');
+            } catch (e) {
+                box.innerHTML = `고양이가 잠시 졸고 있어요 (에러: ${e.message})`;
+                status.innerText = "에러 발생";
+            }
+        } else {
+            promptText += ` 얼굴 특징 설명: ${desc}`;
+            await callCatFortuneAPI(promptText, 'face-fortune-box', 'face-status-indicator');
+        }
+    }
+
+    // 이미지 포함(멀티모달) 요청 전용 헬퍼 - callCatFortuneAPI와 별도 (요청 body 구조가 다름)
+    async function getFaceReadingWithImage(promptText, base64Data, mimeType, boxId, statusId) {
+        const box = document.getElementById(boxId);
+        const status = document.getElementById(statusId);
+        if (status) status.innerText = "API 요청 중...";
+
+        try {
+            const fetchPromise = fetch(MY_SERVER_API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ promptText, imageBase64: base64Data, mimeType })
+            });
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('TIMEOUT')), 35000)
+            );
+            const response = await Promise.race([fetchPromise, timeoutPromise]);
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || `HTTP ${response.status}`);
+            }
+
+            box.innerHTML = markdownToHTML(data.result);
+            if (status) status.innerText = "완료!";
+            return data.result;
+        } catch (error) {
+            const msg = error.message === 'TIMEOUT'
+                ? "응답 시간이 너무 깁니다. 네트워크를 확인해주세요."
+                : `고양이가 잠시 졸고 있어요 (에러: ${error.message})`;
+            box.innerHTML = msg;
+            if (status) status.innerText = "에러 발생";
+            return null;
+        }
+    }
+
+    // ---------------------------------------------------------
+    // 고양이 궁합 테스트
+    // ---------------------------------------------------------
+    // 각 옵션의 catIndex는 catData 배열 인덱스와 매칭 (0다솜 1새초 2야물 3몽지 4두리 5퐁퐁 6느루)
+    const matchQuestions = [
+        {
+            q: "스트레스 받을 때 나는?",
+            options: [
+                { text: "혼자 조용히 삭힌다", catIndex: 3 },
+                { text: "친구한테 바로 털어놓는다", catIndex: 5 },
+                { text: "일단 잠부터 잔다", catIndex: 6 },
+                { text: "할 일 목록부터 정리한다", catIndex: 2 }
+            ]
+        },
+        {
+            q: "약속 시간에 나는?",
+            options: [
+                { text: "5분 일찍 도착해서 기다린다", catIndex: 2 },
+                { text: "딱 맞춰 도착한다", catIndex: 0 },
+                { text: "조금 늦어도 괜찮다는 주의다", catIndex: 6 },
+                { text: "늦을까봐 계속 초조하다", catIndex: 4 }
+            ]
+        },
+        {
+            q: "주말에 가장 하고 싶은 건?",
+            options: [
+                { text: "집에서 푹 쉬기", catIndex: 6 },
+                { text: "친구들과 왁자지껄 놀기", catIndex: 5 },
+                { text: "혼자 카페 가서 생각 정리하기", catIndex: 3 },
+                { text: "밀린 자기계발 하기", catIndex: 2 }
+            ]
+        },
+        {
+            q: "누가 고민을 털어놓으면 나는?",
+            options: [
+                { text: "일단 조용히 다 들어준다", catIndex: 0 },
+                { text: "츤데레처럼 무심한 척 챙겨준다", catIndex: 1 },
+                { text: "같이 걱정하며 안절부절못한다", catIndex: 4 },
+                { text: "해결책부터 같이 찾아본다", catIndex: 2 }
+            ]
+        },
+        {
+            q: "나를 한 단어로 표현하면?",
+            options: [
+                { text: "다정함", catIndex: 0 },
+                { text: "새침함", catIndex: 1 },
+                { text: "몽환적", catIndex: 3 },
+                { text: "에너지 넘침", catIndex: 5 }
+            ]
+        }
+    ];
+    let matchCurrentQ = 0;
+    let matchScores = [0, 0, 0, 0, 0, 0, 0];
+
+    function startMatchTest() {
+        matchCurrentQ = 0;
+        matchScores = [0, 0, 0, 0, 0, 0, 0];
+        document.getElementById('match-quiz-area').style.display = 'block';
+        document.getElementById('match-result-area').style.display = 'none';
+        renderMatchQuestion();
+    }
+
+    function renderMatchQuestion() {
+        const total = matchQuestions.length;
+        document.getElementById('match-progress').innerText = `질문 ${matchCurrentQ + 1}/${total}`;
+        const qData = matchQuestions[matchCurrentQ];
+        document.getElementById('match-question').innerText = qData.q;
+
+        const optionsDiv = document.getElementById('match-options');
+        optionsDiv.innerHTML = '';
+        qData.options.forEach((opt, idx) => {
+            const btn = document.createElement('button');
+            btn.innerText = opt.text;
+            btn.onclick = () => selectMatchAnswer(opt.catIndex);
+            optionsDiv.appendChild(btn);
+        });
+    }
+
+    function selectMatchAnswer(catIndex) {
+        matchScores[catIndex]++;
+        matchCurrentQ++;
+        if (matchCurrentQ < matchQuestions.length) {
+            renderMatchQuestion();
+        } else {
+            finishMatchTest();
+        }
+    }
+
+    async function finishMatchTest() {
+        document.getElementById('match-quiz-area').style.display = 'none';
+        document.getElementById('match-result-area').style.display = 'block';
+
+        let bestIdx = 0;
+        for (let i = 1; i < matchScores.length; i++) {
+            if (matchScores[i] > matchScores[bestIdx]) bestIdx = i;
+        }
+        const matchedCat = catData[bestIdx];
+        document.getElementById('match-cat-image').src = `images/cat-${bestIdx}.jfif`;
+        document.getElementById('match-cat-name').innerText = matchedCat.name;
+
+        const promptText = `너는 '${matchedCat.name}' 고양이야. 성격은 '${matchedCat.persona}'.
+        사용자가 성향 테스트를 통해 너와 가장 잘 맞는다는 결과가 나왔어. 왜 너와 잘 맞을지,
+        그리고 앞으로 너한테 사주를 자주 보러 오면 좋은 이유를 네 말투 그대로 3~4문장으로 재미있게 말해줘.`;
+
+        await callCatFortuneAPI(promptText, 'match-result-box', 'match-status-indicator');
+    }
+
+    // ---------------------------------------------------------
+    // 감정 일기
+    // ---------------------------------------------------------
+    async function getDiaryComfort() {
+        const diaryText = document.getElementById('diary-input').value.trim();
+        if (!diaryText) { alert("오늘 기분을 적어주세요!"); return; }
+
+        const { cat } = todayCat();
+        const promptText = `너는 '${cat.name}' 사주 전문가 고양이야. 성격은 '${cat.persona}'.
+        사용자가 오늘 있었던 일이나 기분을 적었어. 네 말투 그대로, 공감하면서 따뜻하게 위로해주고
+        짧은 응원 한마디도 덧붙여줘. 너무 길지 않게 4~6문장 정도로 답해줘.
+        사용자가 적은 내용: ${diaryText}`;
+
+        document.getElementById('diary-fortune-box').style.display = 'block';
+        await callCatFortuneAPI(promptText, 'diary-fortune-box', 'diary-status-indicator');
+    }
+
+    // ---------------------------------------------------------
+    // 원하는 고양이 골라서 상담받기
+    // ---------------------------------------------------------
+    let selectedConsultCatIndex = null;
+
+    function renderCatPicker() {
+        const grid = document.getElementById('cat-picker-grid');
+        grid.innerHTML = '';
+        catData.forEach((cat, idx) => {
+            const card = document.createElement('div');
+            card.style.cssText = 'text-align:center; cursor:pointer; padding:10px; border-radius:15px; background:var(--pastel-cream);';
+            card.innerHTML = `
+                <img src="images/cat-${idx}.jfif" style="width:70px;height:70px;object-fit:contain;">
+                <div style="font-weight:bold; margin-top:4px;">${cat.name}</div>
+                <div style="font-size:0.7rem; color:#999; margin-top:2px;">${cat.persona.split(',')[0]}</div>
+            `;
+            card.onclick = () => selectConsultCat(idx);
+            grid.appendChild(card);
+        });
+    }
+
+    function selectConsultCat(idx) {
+        selectedConsultCatIndex = idx;
+        const cat = catData[idx];
+        document.getElementById('consult-cat-image').src = `images/cat-${idx}.jfif`;
+        document.getElementById('consult-cat-name').innerText = cat.name;
+        document.getElementById('consult-input').value = '';
+        document.getElementById('consult-fortune-box').style.display = 'none';
+        document.getElementById('consult-status-indicator').innerText = '';
+        showPage('consult');
+    }
+
+    async function getConsultAnswer() {
+        const question = document.getElementById('consult-input').value.trim();
+        if (!question) { alert("궁금한 걸 적어주세요!"); return; }
+        if (selectedConsultCatIndex === null) { showPage('choose-cat'); return; }
+
+        const cat = catData[selectedConsultCatIndex];
+        const promptText = `너는 '${cat.name}' 사주 전문가 고양이야. 성격은 '${cat.persona}'.
+        사용자가 너를 직접 골라서 상담을 요청했어. 네 말투 그대로, 사용자의 질문에 성심껏 답해줘.
+        너무 길지 않게 4~6문장 정도로 답해줘.
+        사용자의 질문: ${question}`;
+
+        document.getElementById('consult-fortune-box').style.display = 'block';
+        await callCatFortuneAPI(promptText, 'consult-fortune-box', 'consult-status-indicator');
+    }
+</script>
+<!-- 카카오 애드핏 연동 완료 (홈배너: DAN-t3orEo3eMD4CVg13 / 결과화면: DAN-iXNt5wxTVvQzsbJ7) -->
+<script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
+</body>
+</html>
