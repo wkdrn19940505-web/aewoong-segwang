@@ -21,10 +21,12 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: '서버에 GEMINI_API_KEY 환경변수가 설정되지 않았습니다.' });
   }
 
-  const { promptText, imageBase64, mimeType } = req.body || {};
+  const { promptText, imageBase64, mimeType, mode } = req.body || {};
   if (!promptText) {
     return res.status(400).json({ error: 'promptText가 필요합니다.' });
   }
+
+  const isImageGen = mode === 'generate_image';
 
   // 이미지가 있으면 멀티모달(텍스트+이미지) 요청, 없으면 텍스트 전용 요청
   const parts = [{ text: promptText }];
@@ -37,7 +39,15 @@ export default async function handler(req, res) {
     });
   }
 
-  const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent`;
+  // 이미지 생성 모드는 별도 모델(Nano Banana / gemini-2.5-flash-image) 사용
+  const API_URL = isImageGen
+    ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent`
+    : `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent`;
+
+  const requestBody = {
+    contents: [{ parts }],
+    ...(isImageGen ? { generationConfig: { responseModalities: ['IMAGE', 'TEXT'] } } : {})
+  };
 
   // 503(과부하)/429(한도초과) 에러는 최대 3회까지 서버에서 자동 재시도
   async function callGemini(attempt = 1) {
@@ -47,7 +57,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
         'x-goog-api-key': API_KEY
       },
-      body: JSON.stringify({ contents: [{ parts }] })
+      body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
@@ -67,7 +77,30 @@ export default async function handler(req, res) {
     if (!data.candidates || data.candidates.length === 0) {
       return res.status(502).json({ error: `AI 응답에 candidates가 없습니다. 응답: ${JSON.stringify(data).substring(0, 300)}` });
     }
-    const result = data.candidates[0].content.parts[0].text;
+
+    const responseParts = data.candidates[0].content.parts;
+
+    if (isImageGen) {
+      let resultText = '';
+      let imageData = null;
+      let imageMime = null;
+      for (const p of responseParts) {
+        if (p.text) resultText += p.text;
+        if (p.inlineData) {
+          imageData = p.inlineData.data;
+          imageMime = p.inlineData.mimeType;
+        } else if (p.inline_data) {
+          imageData = p.inline_data.data;
+          imageMime = p.inline_data.mime_type;
+        }
+      }
+      if (!imageData) {
+        return res.status(502).json({ error: '이미지가 생성되지 않았습니다.' });
+      }
+      return res.status(200).json({ result: resultText, imageBase64: imageData, imageMime });
+    }
+
+    const result = responseParts[0].text;
     return res.status(200).json({ result });
   } catch (error) {
     return res.status(502).json({ error: error.message });
