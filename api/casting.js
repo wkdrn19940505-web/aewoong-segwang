@@ -1,4 +1,4 @@
-const { kv } = require('@vercel/kv');
+cimport { kv } from '@vercel/kv';
 
 const ROLES = [
   '여주인공', '남주인공', '베스트프렌드', '든든한 조연',
@@ -24,7 +24,7 @@ async function callGemini(prompt) {
   return text.trim();
 }
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const { action, slug } = req.query;
@@ -95,4 +95,4 @@ module.exports = async (req, res) => {
     console.error(e);
     return res.status(500).json({ error: '서버 오류가 발생했어요.' });
   }
-};
+}
