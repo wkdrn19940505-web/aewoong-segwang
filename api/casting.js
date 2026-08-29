@@ -1,4 +1,12 @@
-cimport { kv } from '@vercel/kv';
+import Redis from 'ioredis';
+
+let redis;
+function getRedis() {
+  if (!redis) {
+    redis = new Redis(process.env.REDIS_URL);
+  }
+  return redis;
+}
 
 const ROLES = [
   '여주인공', '남주인공', '베스트프렌드', '든든한 조연',
@@ -25,14 +33,17 @@ async function callGemini(prompt) {
 }
 
 export default async function handler(req, res) {
+  const kv = getRedis();
   try {
     if (req.method === 'GET') {
       const { action, slug } = req.query;
       if (action === 'board') {
         if (!slug) return res.status(400).json({ error: 'slug가 필요해요.' });
-        const owner = await kv.get(`casting:${slug}:owner`);
-        if (!owner) return res.status(404).json({ error: '존재하지 않는 링크예요.' });
-        const responses = (await kv.get(`casting:${slug}:responses`)) || [];
+        const ownerRaw = await kv.get(`casting:${slug}:owner`);
+        if (!ownerRaw) return res.status(404).json({ error: '존재하지 않는 링크예요.' });
+        const owner = JSON.parse(ownerRaw);
+        const responsesRaw = await kv.get(`casting:${slug}:responses`);
+        const responses = responsesRaw ? JSON.parse(responsesRaw) : [];
         return res.status(200).json({ owner, responses });
       }
       return res.status(400).json({ error: '알 수 없는 요청이에요.' });
@@ -45,8 +56,8 @@ export default async function handler(req, res) {
         const { name, birth } = req.body;
         if (!name || !birth) return res.status(400).json({ error: '이름과 생일을 입력해주세요.' });
         const slug = makeSlug();
-        await kv.set(`casting:${slug}:owner`, { name, birth });
-        await kv.set(`casting:${slug}:responses`, []);
+        await kv.set(`casting:${slug}:owner`, JSON.stringify({ name, birth }));
+        await kv.set(`casting:${slug}:responses`, JSON.stringify([]));
         return res.status(200).json({ slug });
       }
 
@@ -55,8 +66,9 @@ export default async function handler(req, res) {
         if (!slug || !friendName || !friendBirth) {
           return res.status(400).json({ error: '정보를 모두 입력해주세요.' });
         }
-        const owner = await kv.get(`casting:${slug}:owner`);
-        if (!owner) return res.status(404).json({ error: '존재하지 않는 링크예요.' });
+        const ownerRaw = await kv.get(`casting:${slug}:owner`);
+        if (!ownerRaw) return res.status(404).json({ error: '존재하지 않는 링크예요.' });
+        const owner = JSON.parse(ownerRaw);
 
         const prompt = `너는 재미로 캐스팅 결과를 알려주는 사주 캐릭터야.
         ${owner.name}(생일 ${owner.birth})의 인생을 드라마라고 생각했을 때,
@@ -80,9 +92,10 @@ export default async function handler(req, res) {
           // Gemini 실패 시 위의 기본값(랜덤 역할) 사용
         }
 
-        const responses = (await kv.get(`casting:${slug}:responses`)) || [];
+        const responsesRaw = await kv.get(`casting:${slug}:responses`);
+        const responses = responsesRaw ? JSON.parse(responsesRaw) : [];
         responses.push({ friendName, role, reason });
-        await kv.set(`casting:${slug}:responses`, responses);
+        await kv.set(`casting:${slug}:responses`, JSON.stringify(responses));
 
         return res.status(200).json({ role, reason });
       }
@@ -93,6 +106,6 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: '허용되지 않는 방식이에요.' });
   } catch (e) {
     console.error(e);
-    return res.status(500).json({ error: '서버 오류가 발생했어요.' });
+    return res.status(500).json({ error: '서버 오류가 발생했어요: ' + e.message });
   }
 }
