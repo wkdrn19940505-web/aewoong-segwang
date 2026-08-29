@@ -90,7 +90,7 @@
         </div>
         <div class="btn-grid">
             <button onclick="showPage('char-match-hub')" style="font-weight:bold;">🎭 나랑 어울리는 캐릭터</button>
-            <button onclick="showPage('casting-setup')">🎬 내 인생 드라마 캐스팅</button>
+            <button onclick="openCasting()">🎬 내 인생 드라마 캐스팅</button>
             <button onclick="showPage('destiny-choice')">💘 운명의 상대 찾기</button>
             <button onclick="showPage('ask-question')">🙋 궁금한 거 물어보기</button>
             <button onclick="showPage('result')">오늘의 운세</button>
@@ -359,6 +359,12 @@
     <div id="view-casting-setup" class="view">
         <h2>🎬 내 인생 드라마 캐스팅</h2>
         <p class="hint-text" style="text-align:center;">내 인생을 드라마라고 생각하고, 친구들을 캐스팅해보세요! 링크를 만들어서 친구한테 보내면, 친구가 내 드라마 속 어떤 역할인지 재미로 알려줘요.</p>
+        <div class="form-group" id="casting-profile-picker-group" style="display:none;">
+            <label>저장된 프로필에서 선택</label>
+            <select id="casting-profile-picker" onchange="fillCastingOwnerFromProfile()">
+                <option value="">직접 입력할래요</option>
+            </select>
+        </div>
         <div class="form-group"><label>내 이름/닉네임</label><input type="text" id="casting-owner-name" placeholder="예: 예원"></div>
         <div class="form-group"><label>내 생년월일</label><input type="date" id="casting-owner-birth"></div>
         <button onclick="createCastingLink()">🎬 캐스팅 링크 만들기</button>
@@ -373,6 +379,7 @@
         <div id="casting-share-link" class="speech-bubble" style="word-break:break-all; font-size:0.9rem;"></div>
         <button onclick="copyCastingLink()">📋 링크 복사하기</button>
         <button onclick="showPage('casting-board')">🎭 지금까지 캐스팅된 사람 보기</button>
+        <button class="btn-secondary" onclick="startNewCasting()">🔄 새 캐스팅 링크 만들기</button>
         <button class="btn-secondary" onclick="showPage('home')">메뉴로 돌아가기</button>
     </div>
 
@@ -815,6 +822,9 @@
         }
         if (pageId === 'casting-share') {
             renderCastingShareLink();
+        }
+        if (pageId === 'casting-setup') {
+            populateCastingProfilePicker();
         }
         if (pageId === 'casting-board') {
             renderCastingBoard();
@@ -1543,6 +1553,50 @@
     // 내 인생 드라마 캐스팅
     // ---------------------------------------------------------
     let currentCastingSlug = null;
+
+    function openCasting() {
+        // 이미 만들어둔 캐스팅 링크가 있으면 새로 만들지 않고 바로 공유 화면으로 이동
+        const existingSlug = localStorage.getItem('myCastingSlug');
+        if (existingSlug) {
+            currentCastingSlug = existingSlug;
+            showPage('casting-share');
+        } else {
+            showPage('casting-setup');
+        }
+    }
+
+    function startNewCasting() {
+        if (!confirm('새 캐스팅 링크를 만들면 기존 링크는 더 이상 메뉴에서 안 보여요 (링크 자체는 계속 살아있어요). 새로 만들까요?')) return;
+        localStorage.removeItem('myCastingSlug');
+        currentCastingSlug = null;
+        showPage('casting-setup');
+    }
+
+    function populateCastingProfilePicker() {
+        const groupEl = document.getElementById('casting-profile-picker-group');
+        const selectEl = document.getElementById('casting-profile-picker');
+        if (!userProfiles || userProfiles.length === 0) {
+            groupEl.style.display = 'none';
+            return;
+        }
+        groupEl.style.display = 'block';
+        selectEl.innerHTML = '<option value="">직접 입력할래요</option>' +
+            userProfiles.map((p, idx) => `<option value="${idx}">${p.nickname} (${p.birthDate})</option>`).join('');
+        // 현재 활성 프로필을 기본으로 선택해서 채워줌
+        if (activeProfileIndex !== null && activeProfileIndex !== undefined && userProfiles[activeProfileIndex]) {
+            selectEl.value = activeProfileIndex;
+            fillCastingOwnerFromProfile();
+        }
+    }
+
+    function fillCastingOwnerFromProfile() {
+        const selectEl = document.getElementById('casting-profile-picker');
+        const idx = selectEl.value;
+        if (idx === '') return;
+        const p = userProfiles[idx];
+        document.getElementById('casting-owner-name').value = p.nickname;
+        document.getElementById('casting-owner-birth').value = p.birthDate;
+    }
 
     async function createCastingLink() {
         const name = document.getElementById('casting-owner-name').value.trim();
