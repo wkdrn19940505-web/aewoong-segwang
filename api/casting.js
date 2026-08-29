@@ -33,8 +33,9 @@ async function callGemini(prompt) {
 }
 
 export default async function handler(req, res) {
-  const kv = getRedis();
+  let kv;
   try {
+    kv = getRedis();
     if (req.method === 'GET') {
       const { action, slug } = req.query;
       if (action === 'board') {
