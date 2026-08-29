@@ -379,6 +379,7 @@
     <!-- ===== 내 인생 드라마 캐스팅 - 캐스팅보드 ===== -->
     <div id="view-casting-board" class="view">
         <h2 id="casting-board-title">🎬 내 인생 드라마 캐스팅보드</h2>
+        <div id="casting-board-summary"></div>
         <div id="casting-board-list"></div>
         <div id="casting-board-status" class="status-line"></div>
         <button onclick="showPage('casting-share')">🔗 링크 다시 보기</button>
@@ -1607,12 +1608,45 @@
                 return;
             }
             document.getElementById('casting-board-title').innerText = `🎬 ${data.owner.name}의 인생 드라마 캐스팅보드`;
+            const summaryEl = document.getElementById('casting-board-summary');
             if (data.responses.length === 0) {
+                summaryEl.innerHTML = '';
                 listEl.innerHTML = '<p class="hint-text" style="text-align:center;">아직 캐스팅된 사람이 없어요. 링크를 친구에게 보내보세요!</p>';
             } else {
+                const counts = {};
+                const topByRole = {};
+                data.responses.forEach(r => {
+                    counts[r.role] = (counts[r.role] || 0) + 1;
+                    const p = r.percent ?? 0;
+                    if (!topByRole[r.role] || p > topByRole[r.role].percent) {
+                        topByRole[r.role] = { friendName: r.friendName, percent: p };
+                    }
+                });
+                const rows = Object.keys(counts).sort((a, b) => counts[b] - counts[a]).map(role => `
+                    <tr>
+                        <td style="padding:6px 8px; border-bottom:1px solid #eee;">${role}</td>
+                        <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:center;">${counts[role]}명</td>
+                        <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:right;">${topByRole[role].friendName} (${topByRole[role].percent}%)</td>
+                    </tr>
+                `).join('');
+                summaryEl.innerHTML = `
+                    <div class="speech-bubble" style="margin-bottom:14px;">
+                        <strong style="display:block; margin-bottom:6px;">📊 역할별 요약</strong>
+                        <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align:left; padding:6px 8px; border-bottom:2px solid #ccc;">역할</th>
+                                    <th style="text-align:center; padding:6px 8px; border-bottom:2px solid #ccc;">인원</th>
+                                    <th style="text-align:right; padding:6px 8px; border-bottom:2px solid #ccc;">최고 궁합</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                `;
                 listEl.innerHTML = data.responses.map(r => `
                     <div class="speech-bubble" style="margin-bottom:10px;">
-                        <strong>${r.friendName}</strong> — <span style="color:#e67e22;">${r.role}</span><br>
+                        <strong>${r.friendName}</strong> — <span style="color:#e67e22;">${r.role}</span> <span style="color:#888; font-size:0.85rem;">(궁합 ${r.percent ?? '--'}%)</span><br>
                         <span style="font-size:0.9rem;">${r.reason}</span>
                     </div>
                 `).join('');
@@ -1666,6 +1700,7 @@
             resultEl.innerHTML = `
                 <h3 style="margin-top:0;">🎬 캐스팅 결과</h3>
                 <p style="font-size:1.2rem; font-weight:bold; color:#e67e22;">${data.role}</p>
+                <p style="font-size:1rem; color:#e67e22; font-weight:bold;">궁합 ${data.percent ?? '--'}%</p>
                 <p>${data.reason}</p>
             `;
             statusEl.innerText = '';
