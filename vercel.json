@@ -3,10 +3,12 @@
   "builds": [
     { "src": "index.html", "use": "@vercel/static" },
     { "src": "images/**", "use": "@vercel/static" },
-    { "src": "api/fortune.js", "use": "@vercel/node" }
+    { "src": "api/fortune.js", "use": "@vercel/node" },
+    { "src": "api/casting.js", "use": "@vercel/node" }
   ],
   "routes": [
     { "src": "/api/fortune", "dest": "/api/fortune.js" },
+    { "src": "/api/casting", "dest": "/api/casting.js" },
     { "src": "/images/(.*)", "dest": "/images/$1" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
